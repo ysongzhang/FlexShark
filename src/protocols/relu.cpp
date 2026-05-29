@@ -15,7 +15,19 @@ namespace shark
                 select::call(d, r_X, r_Y);
             }
 
+            void gen(const shark::span<u32> &r_X, shark::span<u32> &r_Y)
+            {
+                auto d = drelu::call(r_X);
+                select::call(d, r_X, r_Y);
+            }
+
             void eval(const shark::span<u64> &X, shark::span<u64> &Y)
+            {
+                auto d = drelu::call(X);
+                select::call(d, X, Y);
+            }
+
+            void eval(const shark::span<u32> &X, shark::span<u32> &Y)
             {
                 auto d = drelu::call(X);
                 select::call(d, X, Y);
@@ -33,9 +45,28 @@ namespace shark
                 }
             }
 
+            void call(const shark::span<u32> &X, shark::span<u32> &Y)
+            {
+                if (party == DEALER)
+                {
+                    gen(X, Y);
+                }
+                else
+                {
+                    eval(X, Y);
+                }
+            }
+
             shark::span<u64> call(const shark::span<u64> &X)
             {
                 shark::span<u64> Y(X.size());
+                call(X, Y);
+                return Y;
+            }
+
+            shark::span<u32> call(const shark::span<u32> &X)
+            {
+                shark::span<u32> Y(X.size());
                 call(X, Y);
                 return Y;
             }

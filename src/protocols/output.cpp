@@ -12,6 +12,16 @@ namespace shark
                 send_authenticated_ashare(r_X);
             }
 
+            void gen(const shark::span<u32> &r_X)
+            {
+                send_authenticated_ashare(r_X);
+            }
+
+            void gen(const shark::span<u16> &r_X)
+            {
+                send_authenticated_ashare(r_X);
+            }
+
             void gen(const shark::span<u8> &r_X)
             {
                 send_authenticated_bshare(r_X);
@@ -30,6 +40,30 @@ namespace shark
                 }
             }
 
+            void eval(shark::span<u32> &X)
+            {
+                auto [r_X, r_X_tag] = recv_authenticated_ashare(X.size());
+                batch_check();
+                auto r = authenticated_reconstruct_32(r_X, r_X_tag);
+                batch_check();
+                for (u64 i = 0; i < X.size(); i++)
+                {
+                    X[i] -= r[i];
+                }   
+            }
+
+            void eval(shark::span<u16> &X)
+            {
+                auto [r_X, r_X_tag] = recv_authenticated_ashare(X.size());
+                batch_check();
+                auto r = authenticated_reconstruct_16(r_X, r_X_tag);
+                batch_check();
+                for (u64 i = 0; i < X.size(); i++)
+                {
+                    X[i] -= r[i];
+                }   
+            }
+
             void eval(shark::span<u8> &X)
             {
                 auto r_bdoz = recv_authenticated_bshare(X.size());
@@ -44,6 +78,30 @@ namespace shark
             }
 
             void call(shark::span<u64> &X)
+            {
+                if (party == DEALER)
+                {
+                    gen(X);
+                }
+                else
+                {
+                    eval(X);
+                }
+            }
+
+            void call(shark::span<u32> &X)
+            {
+                if (party == DEALER)
+                {
+                    gen(X);
+                }
+                else
+                {
+                    eval(X);
+                }
+            }
+
+            void call(shark::span<u16> &X)
             {
                 if (party == DEALER)
                 {

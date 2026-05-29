@@ -3,6 +3,10 @@
 #include <cryptoTools/Crypto/PRNG.h>
 
 #include <shark/types/u128.hpp>
+#include <shark/types/u64.hpp>
+#include <shark/types/u32.hpp>
+#include <shark/types/u16.hpp>
+#include <shark/types/u8.hpp>
 #include <shark/utils/comm.hpp>
 #include <shark/crypto/dcfbit.hpp>
 #include <shark/crypto/dcfring.hpp>
@@ -48,10 +52,15 @@ namespace shark {
 
         void randomize(shark::span<u128> &share);
         void randomize(shark::span<u64> &share);
+        void randomize(shark::span<u32> &share);
+        void randomize(shark::span<u16> &share);
         void randomize(shark::span<u8> &share);
         void send_authenticated_ashare(const shark::span<u64> &share);
+        void send_authenticated_ashare(const shark::span<u32> &share);
+        void send_authenticated_ashare(const shark::span<u16> &share);
         void send_authenticated_bshare(const shark::span<u8> &share);
-        void send_dcfbit(const shark::span<u64> &share, int bin);
+        template <typename T>
+        void send_dcfbit(const shark::span<T> &share, int bin);
         void send_dcfring(const shark::span<u64> &share, int bin);
         void send_dpfring(const shark::span<u64> &share, int bin);
 
@@ -63,6 +72,8 @@ namespace shark {
         shark::span<crypto::DPFRingKey> recv_dpfring(u64 size, int bin);
 
         shark::span<u64> authenticated_reconstruct(shark::span<u128> &share, const shark::span<u128> &share_tag);
+        shark::span<u32> authenticated_reconstruct_32(shark::span<u128> &share, const shark::span<u128> &share_tag);
+        shark::span<u16> authenticated_reconstruct_16(shark::span<u128> &share, const shark::span<u128> &share_tag);
         shark::span<u8> authenticated_reconstruct(shark::span<FKOS> &share);
 
         void batch_check();

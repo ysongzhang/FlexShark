@@ -1,5 +1,7 @@
 #include <shark/utils/assert.hpp>
 #include <shark/types/u64.hpp>
+#include <shark/types/u32.hpp>
+#include <shark/types/u16.hpp>
 #include <shark/protocols/common.hpp>
 #include <shark/crypto/dcfbit.hpp>
 #include <cryptoTools/Crypto/AES.h>
@@ -37,7 +39,8 @@ namespace shark
             out_tag_2 = (in_ptr[1] >> 1) & ((1ull << tag_size) - 1);
         }
 
-        std::pair<DCFBitKey, DCFBitKey> dcfbit_gen(int bin, const u64 alpha, const bool greaterThan)
+        template <typename T>
+        std::pair<DCFBitKey, DCFBitKey> dcfbit_gen(int bin, const T alpha, const bool greaterThan)
         {
             u8 payload_bit = 1;
             u64 payload_tag_1 = shark::protocols::bit_key;
@@ -76,9 +79,11 @@ namespace shark
             u64 vi_11_converted_tag_1;
             u64 vi_11_converted_tag_2;
 
+            u64 alpha64 = static_cast<u64>(alpha);
+
             for (int i = 0; i < bin; ++i)
             {
-                const u8 keep = static_cast<uint8_t>(alpha >> (bin - 1 - i)) & 1;
+                const u8 keep = static_cast<uint8_t>(alpha64 >> (bin - 1 - i)) & 1;
                 auto a = toBlock(keep);
 
                 auto ss0 = s[0] & notThreeBlock;
@@ -216,7 +221,8 @@ namespace shark
             return stcw;
         }
 
-        std::tuple<block, u8, u64, u64> traversePathDCF(const DCFBitKey &key, u64 x, const bool geq)
+        template <typename T>
+        std::tuple<block, u8, u64, u64> traversePathDCF(const DCFBitKey &key, T x, const bool geq)
         {
             int bin = key.k.size() - 1;
             block s = _mm_loadu_si128(key.k.data());
@@ -224,9 +230,11 @@ namespace shark
             u64 out_tag_1 = 0;
             u64 out_tag_2 = 0;
 
+            u64 x64 = static_cast<u64>(x);
+
             for (int i = 0; i < bin; ++i)
             {
-                const u8 keep = static_cast<uint8_t>(x >> (bin - 1 - i)) & 1;
+                const u8 keep = static_cast<uint8_t>(x64 >> (bin - 1 - i)) & 1;
                 s = traverseOneDCF(s, _mm_loadu_si128(key.k.data() + (i + 1)), 
                         keep, 
                         out_bit, out_tag_1, out_tag_2, 
@@ -237,7 +245,8 @@ namespace shark
         }
 
 
-        std::tuple<u8, u64> dcfbit_eval(const DCFBitKey &key, const u64 &x, const bool greaterThan)
+        template <typename T>
+        std::tuple<u8, u64> dcfbit_eval(const DCFBitKey &key, const T &x, const bool greaterThan)
         {
             auto [s, out_bit, out_tag_1, out_tag_2] = traversePathDCF(key, x, greaterThan);
             u8 t = lsb(s);
@@ -261,6 +270,14 @@ namespace shark
 
             return std::make_tuple(out_bit, out_tag_1);
         }
+
+        template std::pair<DCFBitKey, DCFBitKey> dcfbit_gen<u16>(int, const u16, const bool);
+        template std::pair<DCFBitKey, DCFBitKey> dcfbit_gen<u32>(int, const u32, const bool);
+        template std::pair<DCFBitKey, DCFBitKey> dcfbit_gen<u64>(int, const u64, const bool);
+
+        template std::tuple<u8, u64> dcfbit_eval<u16>(const DCFBitKey &, const u16 &, const bool);
+        template std::tuple<u8, u64> dcfbit_eval<u32>(const DCFBitKey &, const u32 &, const bool);
+        template std::tuple<u8, u64> dcfbit_eval<u64>(const DCFBitKey &, const u64 &, const bool);
 
     }
 }

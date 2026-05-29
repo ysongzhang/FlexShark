@@ -3,6 +3,7 @@
 #include <tuple>
 #include <shark/types/span.hpp>
 #include <shark/types/u128.hpp>
+#include <shark/types/u8.hpp>
 #include <shark/utils/assert.hpp>
 
 namespace shark
@@ -55,8 +56,11 @@ namespace shark
             DCFBitKey() = default;
         };
 
-        
-        std::pair<DCFBitKey, DCFBitKey> dcfbit_gen(int bin, const u64 alpha, const bool greaterThan = false);
-        std::tuple<u8, u64> dcfbit_eval(const DCFBitKey &key, const u64 &x, const bool greaterThan = false);
+
+        template <typename T>
+        std::pair<DCFBitKey, DCFBitKey> dcfbit_gen(int bin, const T alpha, const bool greaterThan = false);
+
+        template <typename T>
+        std::tuple<u8, u64> dcfbit_eval(const DCFBitKey &key, const T &x, const bool greaterThan = false);
     }
 }

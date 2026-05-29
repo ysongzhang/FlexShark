@@ -79,6 +79,25 @@ namespace shark
     {
         always_assert(bytes == recv(recvsocket, (char *)buf, bytes, MSG_WAITALL));
         bytesReceived += bytes;
+
+        // u64 received = 0;
+        // while (received < bytes) {
+        //     int n = recv(recvsocket, buf + received, bytes - received, 0);
+        //     if (n == 0) {
+        //         fprintf(stderr, "recv: peer closed connection\n");
+        //         abort();
+        //     }
+        //     if (n < 0) {
+        //         if (errno == EINTR)
+        //             continue;
+        //         perror("recv failed");
+        //         abort();
+        //     }
+        //     received += n;
+        // }
+
+        // always_assert(bytes == received);
+        // bytesReceived += bytes;
     }
 
     char *SocketBuf::read(u64 bytes)
@@ -87,12 +106,45 @@ namespace shark
         always_assert(bytes == recv(recvsocket, (char *)tmpBuf, bytes, MSG_WAITALL));
         bytesReceived += bytes;
         return tmpBuf;
+
+        // char *tmpBuf = new char[bytes];
+        // u64 received = 0;
+        // while (received < bytes) {
+        //     int n = recv(recvsocket, tmpBuf + received, bytes - received, 0);
+        //     if (n == 0) {
+        //         fprintf(stderr, "recv: peer closed connection\n");
+        //         abort();
+        //     }
+        //     if (n < 0) {
+        //         if (errno == EINTR)
+        //             continue;
+        //         perror("recv failed");
+        //         abort();
+        //     }
+        //     received += n;
+        // }
+
+        // always_assert(bytes == received);
+        // bytesReceived += bytes;
+        // return tmpBuf;
     }
 
     void SocketBuf::write(char *buf, u64 bytes)
     {
         always_assert(bytes == send(sendsocket, buf, bytes, 0));
         bytesSent += bytes;
+
+        // u64 sent = 0;
+        // while (sent < bytes) {
+        //     int n = send(sendsocket, buf + sent, bytes - sent, 0);
+        //     if (n <= 0) {
+        //         perror("send");
+        //         abort();
+        //     }
+        //     sent += n;
+        // }
+        // always_assert(bytes == sent);
+        // bytesSent += bytes;
     }
 
     void SocketBuf::close()

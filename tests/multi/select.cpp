@@ -6,8 +6,7 @@
 #include <shark/utils/assert.hpp>
 #include <shark/utils/timer.hpp>
 
-using u64 = shark::u64;
-using u8 = shark::u8;
+using namespace shark;
 using namespace shark::protocols;
 
 int main(int argc, char **argv)
@@ -15,9 +14,13 @@ int main(int argc, char **argv)
     init::from_args(argc, argv);
     
     u64 n = 10000;
-    shark::span<u64> X(n);
+    // shark::span<u64> X(n);
+    // shark::span<u32> X(n);
+    shark::span<u16> X(n);
     shark::span<u8> d(n);
-    shark::span<u64> Z(n);
+    // shark::span<u64> Z(n);
+    // shark::span<u32> Z(n);
+    shark::span<u16> Z(n);
 
     if (party == SERVER) {
         for (u64 i = 0; i < n; ++i)
@@ -30,7 +33,9 @@ int main(int argc, char **argv)
 
     input::call(X, 0);
     input::call(d, 0);
+    shark::utils::start_timer("select");
     auto Y = select::call(d, X);
+    shark::utils::stop_timer("select");
     output::call(Y);
     finalize::call();
     if (party == SERVER)
@@ -40,4 +45,5 @@ int main(int argc, char **argv)
             always_assert(Y[i] == Z[i]);
         }
     }
+    shark::utils::print_timer("select");
 }

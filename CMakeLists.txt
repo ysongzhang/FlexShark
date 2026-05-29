@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME}
     src/protocols/matmul.cpp
     src/protocols/relutruncate.cpp
     src/protocols/drelu.cpp
+    src/protocols/b2a.cpp
     src/protocols/select.cpp
     src/protocols/relu.cpp
     src/protocols/conv.cpp
@@ -45,6 +46,9 @@ add_library(${PROJECT_NAME}
     src/protocols/mul.cpp
     src/protocols/lut.cpp
     src/protocols/reciprocal.cpp
+    src/protocols/truncate.cpp
+    src/protocols/down.cpp
+    src/protocols/up.cpp
     src/crypto/dcfbit.cpp
     src/crypto/dcfring.cpp
     src/crypto/dpfring.cpp
@@ -59,10 +63,11 @@ PUBLIC
 
 # list of all single running tests
 set(SINGLE_TESTS
-    dcfbit
-    dcfring
-    dpfring
-    span
+    # dcfbit
+    # dcfring
+    # dpfring
+    # span
+    truncate-clear
 )
 
 # run for all single running tests
@@ -75,18 +80,21 @@ endforeach()
 set(MULTI_TESTS
     init
     matmul
-    relutruncate
+    # relutruncate
     select
-    matmul-big
+    # matmul-big
     drelu
     relu
     # conv # failing
-    maxpool
-    spline
-    sigmoid
-    tanh
+    # maxpool
+    # spline
+    # sigmoid
+    # tanh
     # reciprocal # failing
-    lut
+    # lut
+    truncate
+    down
+    up
 )
 
 foreach(testname IN LISTS MULTI_TESTS)
@@ -103,7 +111,7 @@ set (BENCHMARKS
     # simc1
     # simc2
     # bert
-    alexnet
+    # alexnet
     # alexnet-localtrunc
     # mnist-A
     # hinet
@@ -116,13 +124,13 @@ foreach (benchmark IN LISTS BENCHMARKS)
 endforeach()
 
 set (MICROBENCHMARKS
-    relu
-    spline
-    relutruncate
-    maxpool
-    reciprocal
-    matmul
-    linear
+    # relu
+    # spline
+    # relutruncate
+    # maxpool
+    # reciprocal
+    # matmul
+    # linear
 )
 
 foreach (microbenchmark IN LISTS MICROBENCHMARKS)

@@ -55,6 +55,100 @@ namespace shark
                 }
             }
 
+            void gen(shark::span<u32> &r_X, int owner)
+            {
+                randomize(r_X);
+                
+                if (owner == SERVER)
+                {
+                    server->send_array(r_X);
+                }
+                else
+                {
+                    client->send_array(r_X);
+                }
+            }
+
+            void eval(shark::span<u32> &X, int owner)
+            {
+                if (owner == party)
+                {
+                    shark::utils::start_timer("key_read-input");
+                    auto r_X_clear = dealer->recv_array<u32>(X.size());
+                    shark::utils::stop_timer("key_read-input");
+
+                    for (u64 i = 0; i < X.size(); i++)
+                    {
+                        X[i] += r_X_clear[i];
+                    }
+
+                    peer->send_array(X);
+                }
+                else
+                {
+                    peer->recv_array(X);
+                }
+            }
+
+            void call(shark::span<u32> &X, int owner)
+            {
+                if (party == DEALER)
+                {
+                    gen(X, owner);
+                }
+                else
+                {
+                    eval(X, owner);
+                }
+            }
+
+            void gen(shark::span<u16> &r_X, int owner)
+            {
+                randomize(r_X);
+                
+                if (owner == SERVER)
+                {
+                    server->send_array(r_X);
+                }
+                else
+                {
+                    client->send_array(r_X);
+                }
+            }
+
+            void eval(shark::span<u16> &X, int owner)
+            {
+                if (owner == party)
+                {
+                    shark::utils::start_timer("key_read-input");
+                    auto r_X_clear = dealer->recv_array<u16>(X.size());
+                    shark::utils::stop_timer("key_read-input");
+
+                    for (u64 i = 0; i < X.size(); i++)
+                    {
+                        X[i] += r_X_clear[i];
+                    }
+
+                    peer->send_array(X);
+                }
+                else
+                {
+                    peer->recv_array(X);
+                }
+            }
+
+            void call(shark::span<u16> &X, int owner)
+            {
+                if (party == DEALER)
+                {
+                    gen(X, owner);
+                }
+                else
+                {
+                    eval(X, owner);
+                }
+            }
+
             void gen(shark::span<u8> &r_X, int owner)
             {
                 randomize(r_X);
