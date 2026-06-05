@@ -4,6 +4,7 @@
 #include <vector>
 #include <shark/types/span.hpp>
 #include <shark/types/u128.hpp>
+#include <shark/types/u32.hpp>
 #include <shark/utils/assert.hpp>
 
 namespace shark
@@ -44,7 +45,12 @@ namespace shark
         };
 
         
-        std::pair<DPFRingKey, DPFRingKey> dpfring_gen(int bin, const u64 alpha);
-        std::tuple<u128, u128> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<u64> &lut, u64 lut_offset);
+        template <typename T>
+        std::pair<DPFRingKey, DPFRingKey> dpfring_gen(int bin, const T alpha);
+
+        template <typename T>
+        std::tuple<u128, u128> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<T> &lut, T lut_offset);
+
+        std::tuple<std::tuple<u128, u128>, std::tuple<u128, u128>> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<u32> &lut_1, const std::vector<u32> &lut_2, u32 lut_offset);
     }
 }

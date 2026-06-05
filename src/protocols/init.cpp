@@ -1,6 +1,7 @@
 #include <shark/protocols/common.hpp>
 #include <shark/protocols/init.hpp>
 #include <shark/utils/assert.hpp>
+#include <shark/utils/lookuptable.hpp>
 #include <fstream>
 
 namespace shark {
@@ -29,6 +30,8 @@ namespace shark {
                 server->send(bit_key_0);
                 client->send(bit_key_1);
 
+                init_luts();
+
             }
 
             void eval(int _party, std::string ip, int port, bool oneShot)
@@ -52,6 +55,7 @@ namespace shark {
 
                 prngGlobal.SetSeed(osuCrypto::toBlock(::rand(), ::rand()));
 
+                init_luts();
             }
 
             void from_args(int argc, char ** argv)

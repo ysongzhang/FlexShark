@@ -10,6 +10,8 @@ using namespace shark::protocols;
 using namespace shark::crypto;
 using namespace shark;
 
+using bast_t = shark::u16;
+
 void dpfring_small_exhaustive()
 {
     prngGlobal.SetSeed(osuCrypto::toBlock(0xdeadbeef));
@@ -18,10 +20,10 @@ void dpfring_small_exhaustive()
 
     for (int trial = 0; trial < 100; ++trial)
     {
-        u64 idx = rand() % (1ull << bin);
-        auto [key0, key1] = dpfring_gen(bin, idx);
+        bast_t idx = rand() % (1ull << bin);
+        auto [key0, key1] = dpfring_gen<bast_t>(bin, idx);
 
-        std::vector<u64> lut(1ull << bin);
+        std::vector<bast_t> lut(1ull << bin);
         for (int i = 0; i < (1ull << bin); i++)
         {
             lut[i] = rand();
@@ -30,15 +32,16 @@ void dpfring_small_exhaustive()
         for (int i = 0; i < (1ull << bin); i++)
         {
             // u64 x = i;
-            auto [out_ring_0, out_tag_0] = dpfring_evalall_reduce(0, key0, lut, i);
-            auto [out_ring_1, out_tag_1] = dpfring_evalall_reduce(1, key1, lut, i);
+            auto [out_ring_0, out_tag_0] = dpfring_evalall_reduce<bast_t>(0, key0, lut, i);
+            auto [out_ring_1, out_tag_1] = dpfring_evalall_reduce<bast_t>(1, key1, lut, i);
 
             u128 out_ring = out_ring_0 + out_ring_1;
             u128 out_tag = out_tag_0 + out_tag_1;
-            always_assert(out_ring == lut[(idx + i) % (1ull << bin)]);
+            always_assert(bast_t(out_ring) == lut[(idx + i) % (1ull << bin)]);
             always_assert(out_tag == ring_key * lut[(idx + i) % (1ull << bin)]);
         }
     }
+    std::cout << "dpfring small exhaustive test passed!" << std::endl;
 }
 
 

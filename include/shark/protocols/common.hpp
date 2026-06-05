@@ -12,6 +12,8 @@
 #include <shark/crypto/dcfring.hpp>
 #include <shark/crypto/dpfring.hpp>
 
+#include <cstdint>
+
 namespace shark {
     namespace protocols {
         /// this key is used to generate the keys for the two parties
@@ -62,7 +64,8 @@ namespace shark {
         template <typename T>
         void send_dcfbit(const shark::span<T> &share, int bin);
         void send_dcfring(const shark::span<u64> &share, int bin);
-        void send_dpfring(const shark::span<u64> &share, int bin);
+        template <typename T>
+        void send_dpfring(const shark::span<T> &share, int bin);
 
         /// methods used by the evaluators
         std::pair<shark::span<u128>, shark::span<u128>> recv_authenticated_ashare(u64 size);

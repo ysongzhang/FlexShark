@@ -1,5 +1,8 @@
 #include <shark/utils/assert.hpp>
 #include <shark/types/u128.hpp>
+#include <shark/types/u64.hpp>
+#include <shark/types/u32.hpp>
+#include <shark/types/u16.hpp>
 #include <shark/protocols/common.hpp>
 #include <shark/crypto/dpfring.hpp>
 #include <cryptoTools/Crypto/AES.h>
@@ -41,7 +44,8 @@ namespace shark
             out_tag = *(u128 *)(ct + 1);
         }
 
-        std::pair<DPFRingKey, DPFRingKey> dpfring_gen(int bin, const u64 alpha)
+        template <typename T>
+        std::pair<DPFRingKey, DPFRingKey> dpfring_gen(int bin, const T alpha)
         {
             u128 payload_ring = 1;
             u128 payload_tag = shark::protocols::ring_key;
@@ -57,10 +61,11 @@ namespace shark
             k1[0] = s[1];
             
             block ct[4];
+            u64 alpha64 = static_cast<u64>(alpha);
 
             for (int i = 0; i < bin; ++i)
             {
-                const u8 keep = static_cast<uint8_t>(alpha >> (bin - 1 - i)) & 1;
+                const u8 keep = static_cast<uint8_t>(alpha64 >> (bin - 1 - i)) & 1;
                 auto a = toBlock(keep);
 
                 auto ss0 = s[0] & notThreeBlock;
@@ -128,7 +133,8 @@ namespace shark
             );
         }
 
-        std::tuple<u128, u128> do_leaf(int party, const DPFRingKey &key, block s, const std::vector<u64> &lut, u64 x, u64 lut_offset, int bin)
+        template <typename T>
+        std::tuple<u128, u128> do_leaf(int party, const DPFRingKey &key, block s, const std::vector<T> &lut, u64 x, T lut_offset, int bin)
         {
             u8 t = lsb(s);
             u128 s_converted_ring;
@@ -148,11 +154,13 @@ namespace shark
                 s_converted_tag = -s_converted_tag;
             }
 
-            u64 idx = (x + lut_offset) % (1ull << bin);
+            u64 lut_offset_64 = static_cast<u64>(lut_offset);
+            u64 idx = (x + lut_offset_64) % (1ull << bin);
             return std::make_tuple(s_converted_ring * lut[idx], s_converted_tag * lut[idx]);
         }
 
-        std::tuple<u128, u128> do_subtree(int party, const DPFRingKey &key, const std::vector<u64> &lut, int i, int bin, u64 curr_x, block s, u64 lut_offset)
+        template <typename T>
+        std::tuple<u128, u128> do_subtree(int party, const DPFRingKey &key, const std::vector<T> &lut, int i, int bin, u64 curr_x, block s, T lut_offset)
         {
             if (i == bin)
             {
@@ -191,12 +199,106 @@ namespace shark
             return std::make_tuple(out_ring, out_tag);
         }
 
-        std::tuple<u128, u128> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<u64> &lut, u64 lut_offset)
+        template <typename T>
+        std::tuple<u128, u128> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<T> &lut, T lut_offset)
         {
             int bin = key.k.size() - 1;
             always_assert(lut.size() == (1ull<<bin));
         
             return do_subtree(party, key, lut, 0, bin, 0, _mm_loadu_si128(key.k.data()), lut_offset);
+        }
+
+        template std::pair<DPFRingKey, DPFRingKey> dpfring_gen<u64>(int, const u64);
+        template std::pair<DPFRingKey, DPFRingKey> dpfring_gen<u32>(int, const u32);
+        template std::pair<DPFRingKey, DPFRingKey> dpfring_gen<u16>(int, const u16);
+
+        template std::tuple<u128, u128> dpfring_evalall_reduce<u64>(int, const DPFRingKey &, const std::vector<u64> &, u64);
+        template std::tuple<u128, u128> dpfring_evalall_reduce<u32>(int, const DPFRingKey &, const std::vector<u32> &, u32);
+        template std::tuple<u128, u128> dpfring_evalall_reduce<u16>(int, const DPFRingKey &, const std::vector<u16> &, u16);
+
+
+        std::tuple<std::tuple<u128, u128>, std::tuple<u128, u128>> do_leaf(int party, const DPFRingKey &key, block s, const std::vector<u32> &lut_1, const std::vector<u32> &lut_2, u64 x, u32 lut_offset, int bin)
+        {
+            u8 t = lsb(s);
+            u128 s_converted_ring;
+            u128 s_converted_tag;
+
+            convert_dpf(s & notThreeBlock, s_converted_ring, s_converted_tag);
+
+            if (t)
+            {
+                s_converted_ring += key.g_ring;
+                s_converted_tag += key.g_tag;
+            }
+
+            if (party == 1)
+            {
+                s_converted_ring = -s_converted_ring;
+                s_converted_tag = -s_converted_tag;
+            }
+
+            u64 lut_offset_64 = static_cast<u64>(lut_offset);
+            u64 idx = (x + lut_offset_64) % (1ull << bin);
+            auto res1 = std::make_tuple(s_converted_ring * lut_1[idx], s_converted_tag * lut_1[idx]);
+            auto res2 = std::make_tuple(s_converted_ring * lut_2[idx], s_converted_tag * lut_2[idx]);
+            return std::make_tuple(res1, res2);
+        }
+
+        std::tuple<std::tuple<u128, u128>, std::tuple<u128, u128>> do_subtree(int party, const DPFRingKey &key, const std::vector<u32> &lut_1, const std::vector<u32> &lut_2, int i, int bin, u64 curr_x, block s, u32 lut_offset)
+        {
+            if (i == bin)
+            {
+                return do_leaf(party, key, s, lut_1, lut_2, curr_x, lut_offset, bin);
+            }
+
+            u8 t_previous = lsb(s);
+            block cw = _mm_loadu_si128(key.k.data() + i + 1);
+
+            const auto scw = (cw & notThreeBlock);
+            block ds[] = { ((cw >> 1) & OneBlock), (cw & OneBlock) };
+            const auto mask = zeroAndAllOne[t_previous];
+            auto ss = s & notThreeBlock;
+
+            u128 out_ring_1 = 0;
+            u128 out_tag_1 = 0;
+            u128 out_ring_2 = 0;
+            u128 out_tag_2 = 0;
+
+            for (int keep = 0; keep < 2; ++keep)
+            {
+                block ct;
+                if (keep == 0)
+                {
+                    ct = ak0.ecbEncBlock(ss) ^ ss;
+                }
+                else
+                {
+                    ct = ak1.ecbEncBlock(ss) ^ ss;
+                }
+
+                block stcw = ((scw ^ ds[keep]) & mask) ^ ct;
+                auto tup = do_subtree(party, key, lut_1, lut_2, i + 1, bin, (curr_x << 1) + keep, stcw, lut_offset);
+
+                auto &t1 = std::get<0>(tup);
+                auto &t2 = std::get<1>(tup);
+
+                out_ring_1 += std::get<0>(t1);
+                out_tag_1  += std::get<1>(t1);
+
+                out_ring_2 += std::get<0>(t2);
+                out_tag_2  += std::get<1>(t2);
+            }
+
+            return std::make_tuple(std::make_tuple(out_ring_1, out_tag_1), std::make_tuple(out_ring_2, out_tag_2));
+        }
+
+        std::tuple<std::tuple<u128, u128>, std::tuple<u128, u128>> dpfring_evalall_reduce(int party, const DPFRingKey &key, const std::vector<u32> &lut_1, const std::vector<u32> &lut_2, u32 lut_offset)
+        {
+            int bin = key.k.size() - 1;
+            always_assert(lut_1.size() == (1ull<<bin));
+            always_assert(lut_2.size() == (1ull<<bin));
+        
+            return do_subtree(party, key, lut_1, lut_2, 0, bin, 0, _mm_loadu_si128(key.k.data()), lut_offset);
         }
     }
 }

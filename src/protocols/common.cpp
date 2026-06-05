@@ -281,12 +281,13 @@ namespace shark
             }
         }
 
-        void send_dpfring(const shark::span<u64> &share, int bin)
+        template <typename T>
+        void send_dpfring(const shark::span<T> &share, int bin)
         {
             u64 size = share.size();
             for (u64 i = 0; i < size; ++i)
             {
-                auto [k0, k1] = crypto::dpfring_gen(bin, share[i]);
+                auto [k0, k1] = crypto::dpfring_gen<T>(bin, share[i]);
                 server->send_array(k0.k);
                 server->send(k0.g_ring);
                 server->send(k0.g_tag);
@@ -296,6 +297,9 @@ namespace shark
                 client->send(k1.g_tag);
             }
         }
+        template void send_dpfring<u16>(const shark::span<u16>&, int);
+        template void send_dpfring<u32>(const shark::span<u32>&, int);
+        template void send_dpfring<u64>(const shark::span<u64>&, int);
 
         shark::span<crypto::DCFBitKey> recv_dcfbit(u64 size, int bin)
         {

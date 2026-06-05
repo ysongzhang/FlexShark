@@ -8,12 +8,13 @@ namespace shark
     {
         namespace maxpool
         {
-            void _max(const shark::span<u64> &X, const shark::span<u64> &Y, shark::span<u64> &res)
+            template <typename T>
+            void _max(const shark::span<T> &X, const shark::span<T> &Y, shark::span<T> &res)
             {
                 always_assert(X.size() == Y.size());
                 always_assert(X.size() == res.size());
                 
-                shark::span<u64> tmp(X.size());
+                shark::span<T> tmp(X.size());
 
                 #pragma omp parallel for
                 for (u64 i = 0; i < X.size(); ++i)
@@ -30,12 +31,13 @@ namespace shark
                 }
             }
 
-            void _logmax(u64 s1, u64 s2, const shark::span<u64> &X, shark::span<u64> &Z)
+            template <typename T>
+            void _logmax(u64 s1, u64 s2, const shark::span<T> &X, shark::span<T> &Z)
             {
                 always_assert(X.size() == s1 * s2);
                 always_assert(Z.size() == s1);
 
-                shark::span<u64> res(s1 * s2);
+                shark::span<T> res(s1 * s2);
 
                 #pragma omp parallel for collapse(2)
                 for (u64 i = 0; i < s1; ++i)
@@ -51,8 +53,8 @@ namespace shark
                 {
                     u64 curr2 = curr / 2;
 
-                    shark::span<u64> left(s1 * curr2);
-                    shark::span<u64> right(s1 * curr2);
+                    shark::span<T> left(s1 * curr2);
+                    shark::span<T> right(s1 * curr2);
 
                     #pragma omp parallel for collapse(2)
                     for (u64 i = 0; i < s1; ++i)
@@ -66,7 +68,7 @@ namespace shark
                         }
                     }
 
-                    _max(left, right, left);
+                    _max<T>(left, right, left);
 
                     u64 currNext;
                     if (curr % 2 == 0)
@@ -78,7 +80,7 @@ namespace shark
                         currNext = curr / 2 + 1;
                     }
 
-                    shark::span<u64> resNext(s1 * currNext);
+                    shark::span<T> resNext(s1 * currNext);
 
                     if (curr % 2 == 1)
                     {
@@ -187,6 +189,11 @@ namespace shark
                 call(f, padding, stride, ci, inH, inW, Img, OutImg);
 
                 return OutImg;
+            }
+
+            void max(u64 s1, u64 s2, const shark::span<u32> &in, shark::span<u32> &out)
+            {
+                _logmax<u32>(s1, s2, in, out);
             }
         }
     }

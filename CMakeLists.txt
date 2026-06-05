@@ -27,31 +27,34 @@ add_subdirectory(ext/cryptoTools)
 add_library(${PROJECT_NAME}
     src/utils/timer.cpp
     src/utils/comm.cpp
+    src/utils/lookuptable.cpp
     src/protocols/common.cpp
     src/protocols/init.cpp
     src/protocols/finalize.cpp
     src/protocols/input.cpp
     src/protocols/output.cpp
     src/protocols/matmul.cpp
-    src/protocols/relutruncate.cpp
     src/protocols/drelu.cpp
     src/protocols/b2a.cpp
     src/protocols/select.cpp
     src/protocols/relu.cpp
     src/protocols/conv.cpp
     src/protocols/maxpool.cpp
-    src/protocols/spline.cpp
-    src/protocols/lrs.cpp
     src/protocols/sumpool.cpp
     src/protocols/mul.cpp
     src/protocols/lut.cpp
-    src/protocols/reciprocal.cpp
     src/protocols/truncate.cpp
     src/protocols/down.cpp
     src/protocols/up.cpp
     src/crypto/dcfbit.cpp
     src/crypto/dcfring.cpp
     src/crypto/dpfring.cpp
+
+    # depicted
+    # src/protocols/relutruncate.cpp
+    # src/protocols/spline.cpp
+    # src/protocols/lrs.cpp
+    # src/protocols/reciprocal.cpp
 )
 
 target_link_libraries (${PROJECT_NAME} Eigen3::Eigen cryptoTools)
@@ -65,7 +68,7 @@ PUBLIC
 set(SINGLE_TESTS
     # dcfbit
     # dcfring
-    # dpfring
+    dpfring
     # span
     truncate-clear
 )
@@ -80,11 +83,20 @@ endforeach()
 set(MULTI_TESTS
     init
     matmul
-    # relutruncate
     select
-    # matmul-big
     drelu
     relu
+    truncate
+    down
+    up
+    inv
+    gelu
+    nexp
+    rsqrt
+    softmax
+
+    # relutruncate
+    # matmul-big
     # conv # failing
     # maxpool
     # spline
@@ -92,9 +104,6 @@ set(MULTI_TESTS
     # tanh
     # reciprocal # failing
     # lut
-    truncate
-    down
-    up
 )
 
 foreach(testname IN LISTS MULTI_TESTS)
