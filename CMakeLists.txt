@@ -46,6 +46,7 @@ add_library(${PROJECT_NAME}
     src/protocols/truncate.cpp
     src/protocols/down.cpp
     src/protocols/up.cpp
+    src/protocols/matmulpar.cpp
     src/crypto/dcfbit.cpp
     src/crypto/dcfring.cpp
     src/crypto/dpfring.cpp
@@ -113,18 +114,7 @@ foreach(testname IN LISTS MULTI_TESTS)
 endforeach()
 
 set (BENCHMARKS
-    # deepsecure1
-    # deepsecure2
-    # deepsecure3
-    # deepsecure4
-    # simc1
-    # simc2
-    # bert
-    # alexnet
-    # alexnet-localtrunc
-    # mnist-A
-    # hinet
-    # vgg16
+    bert
 )
 
 foreach (benchmark IN LISTS BENCHMARKS)
@@ -132,17 +122,17 @@ foreach (benchmark IN LISTS BENCHMARKS)
     target_link_libraries(benchmark-${benchmark} ${PROJECT_NAME})
 endforeach()
 
-set (MICROBENCHMARKS
-    # relu
-    # spline
-    # relutruncate
-    # maxpool
-    # reciprocal
-    # matmul
-    # linear
-)
+# set (MICROBENCHMARKS
+#     # relu
+#     # spline
+#     # relutruncate
+#     # maxpool
+#     # reciprocal
+#     # matmul
+#     # linear
+# )
 
-foreach (microbenchmark IN LISTS MICROBENCHMARKS)
-    add_executable(micro-${microbenchmark} microbenchmarks/${microbenchmark}.cpp)
-    target_link_libraries(micro-${microbenchmark} ${PROJECT_NAME})
-endforeach()
+# foreach (microbenchmark IN LISTS MICROBENCHMARKS)
+#     add_executable(micro-${microbenchmark} microbenchmarks/${microbenchmark}.cpp)
+#     target_link_libraries(micro-${microbenchmark} ${PROJECT_NAME})
+# endforeach()

@@ -79,7 +79,7 @@ namespace shark
                     }
                 }
                 
-                auto res = mul::call(x_centered, inv_std_broadcast);
+                res = mul::call(x_centered, inv_std_broadcast);
                 res = truncate::call(res, FLOAT_PRECISION_64);
                 
                 // 7. Affine: * gamma + beta
@@ -94,9 +94,9 @@ namespace shark
                     }
                 }
 
-                res = mult::call(res, gamma_broadcast);
-                res = truncate::call(res, FLOAT_PRECISION_64);
+                res = mul::call(res, gamma_broadcast);
                 res = add::call(res, beta_broadcast);
+                res = truncate::call(res, FLOAT_PRECISION_64);
             }
 
             inline shark::span<u64> call(u64 n_token, u64 n_embd, const shark::span<u64> &in, const shark::span<u64> &gamma, const shark::span<u64> &beta)

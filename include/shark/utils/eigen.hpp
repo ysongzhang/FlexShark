@@ -1,5 +1,6 @@
 #pragma once
 
+#include <shark/types/u64.hpp>
 #include <shark/types/u128.hpp>
 #include <shark/types/span.hpp>
 

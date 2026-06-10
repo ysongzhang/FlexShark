@@ -57,7 +57,7 @@ namespace shark
                 }
 
                 auto out_tmp_32 = mul::call(exp_x, sum_inv_expanded);
-                // upcase: operation fusion
+                // upcast: operation fusion
                 shark:span<u64> out_tmp_64(size);
                 #pragma omp parallel for
                 for (u64 i = 0; i < size; i++)
