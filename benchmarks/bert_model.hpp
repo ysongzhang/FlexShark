@@ -340,14 +340,19 @@ span<u64> layer(span<u64> &x, int layer, BertModel &model, const span<u32> &mask
     u64 n_token = x.size() / model.n_embd;
     // Post-LayerNorm Architecture (Standard BERT)
     // 1. Attention Sublayer
+    if (party == SERVER) std::cout << "11111" << std::endl;
     auto attn_out = mha(x, layer, model, mask);
+    if (party == SERVER) std::cout << "22222" << std::endl;
     auto res = add::call(x, attn_out);
     auto ln1 = bert_layernorm(res, n_token, model.n_embd, model.ln1_w[layer], model.ln1_b[layer]);
+    if (party == SERVER) std::cout << "33333" << std::endl;
 
     // 2. FFN Sublayer
     auto ffn_out = ffn(ln1, layer, model);
+    if (party == SERVER) std::cout << "44444" << std::endl;
     res = add::call(ln1, ffn_out);
     auto ln2 = bert_layernorm(res, n_token, model.n_embd, model.ln2_w[layer], model.ln2_b[layer]);
+    if (party == SERVER) std::cout << "55555" << std::endl;
 
     return ln2;
 }

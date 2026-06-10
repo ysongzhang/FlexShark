@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     setbuf(stdout, NULL);
     init::from_args(argc, argv);
 
-    u64 n_token = 1;
+    u64 n_token = 128;
     
     BertModel model;
     span<u64> x(n_token * model.n_embd);

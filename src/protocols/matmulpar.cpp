@@ -78,10 +78,14 @@ namespace shark {
                     auto mat_r_Z_tag = getMat(a, c, r_Z_tag);
 
                     // Z = r_Z + X @ Y - r_X @ Y - X @ r_Y
-                    mat_Z_share = mat_r_Z + (mat_X * u128(party) - mat_r_X) * mat_Y;
+                    // mat_Z_share = mat_r_Z + (mat_X * u128(party) - mat_r_X) * mat_Y;
+                    auto tmp_share = (mat_X * u128(party) - mat_r_X).eval();
+                    mat_Z_share = mat_r_Z + (tmp_share * mat_Y).eval();
                     mat_Z_share -= mat_X * mat_r_Y;
 
-                    mat_Z_tag = mat_r_Z_tag + (mat_X * ring_key - mat_r_X_tag) * mat_Y;
+                    // mat_Z_tag = mat_r_Z_tag + (mat_X * ring_key - mat_r_X_tag) * mat_Y;
+                    auto tmp_tag = (mat_X * ring_key - mat_r_X_tag).eval();
+                    mat_Z_tag = mat_r_Z_tag + (tmp_tag * mat_Y).eval();
                     mat_Z_tag -= mat_X * mat_r_Y_tag;
                 }
 

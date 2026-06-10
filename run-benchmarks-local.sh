@@ -31,7 +31,7 @@ for benchmark in bert; do
 done
 
 # for benchmark in bert; do
-#   OMP_NUM_THREADS=16 ./build/benchmark-$benchmark 2 &> /dev/null
+#   # OMP_NUM_THREADS=16 ./build/benchmark-$benchmark 2 &> /dev/null
 #   OMP_NUM_THREADS=16 ./build/benchmark-$benchmark 0 &
 #   OMP_NUM_THREADS=16 ./build/benchmark-$benchmark 1
 # done
