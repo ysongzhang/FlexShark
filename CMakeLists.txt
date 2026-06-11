@@ -23,6 +23,7 @@ endif()
 find_package (Eigen3 REQUIRED NO_MODULE)
 
 add_subdirectory(ext/cryptoTools)
+add_subdirectory(ext/cnpy)
 
 add_library(${PROJECT_NAME}
     src/utils/timer.cpp
@@ -121,6 +122,9 @@ foreach (benchmark IN LISTS BENCHMARKS)
     add_executable(benchmark-${benchmark} benchmarks/${benchmark}.cpp)
     target_link_libraries(benchmark-${benchmark} ${PROJECT_NAME})
 endforeach()
+
+add_executable(benchmark-bert-acc benchmarks/bert_acc.cpp)
+target_link_libraries(benchmark-bert-acc ${PROJECT_NAME} cnpy)
 
 # set (MICROBENCHMARKS
 #     # relu

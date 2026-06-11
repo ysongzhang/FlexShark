@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+find_package(ZLIB REQUIRED)
+set(CMAKE_CXX_STANDARD 17)
+add_library(cnpy cnpy.cpp)
+target_link_libraries(cnpy ZLIB::ZLIB)
+target_include_directories(cnpy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

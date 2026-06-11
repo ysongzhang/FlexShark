@@ -9,6 +9,7 @@ namespace shark {
             void gen(uint64_t key);
             void eval(int party, std::string ip, int port, bool oneShot = true);
             void from_args(int argc, char ** argv);
+            void from_id(int _party);
         }
     }
 }

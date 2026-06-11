@@ -28,7 +28,7 @@ namespace shark {
 
         void print_timer(const std::string& name)
         {
-            std::cout << name << ": " << timers[name].accumulated_time << " ms, " << (timers[name].accumulated_comm / 1024.0) << " KB"  << std::endl;
+            std::cout << name << ": " << timers[name].accumulated_time << " ms, " << (timers[name].accumulated_comm / 1024.0 / 1024.0) << " MB"  << std::endl;
         }
 
         void print_all_timers(const std::string& prefix)

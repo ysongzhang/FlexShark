@@ -77,6 +77,23 @@ namespace shark {
                 else
                     eval(_party, ip, 42069, true);
             }
+
+            void from_id(int _party)
+            {
+                always_assert(_party == DEALER || _party == SERVER || _party == CLIENT || _party == EMUL);
+
+                if (_party == EMUL)
+                {
+                    party = EMUL;
+                    return;
+                }
+                
+                std::string ip = "127.0.0.1";
+                if (_party == DEALER)
+                    init::gen(0xdeadbeef);
+                else
+                    eval(_party, ip, 42069, true);
+            }
         }
     }
 }
