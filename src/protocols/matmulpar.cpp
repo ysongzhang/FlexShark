@@ -60,6 +60,44 @@ namespace shark {
                     auto [r_Z, r_Z_tag] = recv_authenticated_ashare(Z_block);
                     shark::utils::stop_timer("key_read");
 
+                    // auto X_i = shark::span<u64>(X.data() + i * X_block, X_block);
+                    // auto Y_i = shark::span<u64>(Y.data() + i * Y_block, Y_block);
+
+                    // shark::span<u128> Z_share(Z_share_all.data() + i * Z_block, Z_block);
+                    // shark::span<u128> Z_tag(Z_tag_all.data() + i * Z_block, Z_block);
+
+                    // Z = r_Z + X @ Y - r_X @ Y - X @ r_Y  
+                    // #pragma omp parallel for collapse(2)
+                    // for (u64 i = 0; i < a; ++i)
+                    // {
+                    //     for (u64 j = 0; j < c; ++j)
+                    //     {
+                    //         int index = i * c + j;
+                    //         u128 zs = r_Z[index];
+                    //         u128 zt = r_Z_tag[index];
+
+                    //         for (u64 k = 0; k < b; ++k)
+                    //         {
+                    //             int index_1 = i * b + k;
+                    //             auto x  = X_i[index_1];
+                    //             auto tx = x * u128(party) - r_X[index_1];
+                    //             auto tt = x * ring_key - r_X_tag[index_1];
+
+                    //             int index_2 = k * c + j;
+                    //             auto y  = Y_i[index_2];
+                    //             auto ry = r_Y[index_2];
+                    //             auto rt = r_Y_tag[index_2];
+
+                    //             zs += tx * y - x * ry;
+                    //             zt += tt * y - x * rt;
+                    //         }
+
+                    //         int index = i * c + j;
+                    //         Z_share[index] = zs;
+                    //         Z_tag[index]   = zt;
+                    //     }
+                    // }
+
                     auto X_i = shark::span<u64>(X.data() + i * X_block, X_block);
                     auto Y_i = shark::span<u64>(Y.data() + i * Y_block, Y_block);
                     auto mat_X = getMat(a, b, X_i).cast<u128>();
@@ -78,15 +116,13 @@ namespace shark {
                     auto mat_r_Z_tag = getMat(a, c, r_Z_tag);
 
                     // Z = r_Z + X @ Y - r_X @ Y - X @ r_Y
-                    // mat_Z_share = mat_r_Z + (mat_X * u128(party) - mat_r_X) * mat_Y;
-                    auto tmp_share = (mat_X * u128(party) - mat_r_X).eval();
-                    mat_Z_share = mat_r_Z + (tmp_share * mat_Y).eval();
-                    mat_Z_share -= mat_X * mat_r_Y;
-
-                    // mat_Z_tag = mat_r_Z_tag + (mat_X * ring_key - mat_r_X_tag) * mat_Y;
-                    auto tmp_tag = (mat_X * ring_key - mat_r_X_tag).eval();
-                    mat_Z_tag = mat_r_Z_tag + (tmp_tag * mat_Y).eval();
-                    mat_Z_tag -= mat_X * mat_r_Y_tag;
+                    auto tmp_share_1 = ((mat_X * u128(party) - mat_r_X).eval() * mat_Y).eval();
+                    auto tmp_share_2 = mat_X * mat_r_Y;
+                    mat_Z_share = mat_r_Z + tmp_share_1 - tmp_share_2;
+                    
+                    auto tmp_tag_1 = ((mat_X * ring_key - mat_r_X_tag).eval() * mat_Y).eval();
+                    auto tmp_tag_2 = mat_X * mat_r_Y_tag;
+                    mat_Z_tag = mat_r_Z_tag + tmp_tag_1 - tmp_tag_2;
                 }
 
                 Z = authenticated_reconstruct(Z_share_all, Z_tag_all);

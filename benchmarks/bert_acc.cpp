@@ -8,6 +8,10 @@ double fix2double(u64 x) {
     return static_cast<double>(static_cast<std::make_signed_t<u64>>(x)) / (1 << FLOAT_PRECISION_64);
 }
 
+double fix2double(u32 x) {
+    return static_cast<double>(static_cast<std::make_signed_t<u32>>(x)) / (1 << FLOAT_PRECISION_32);
+}
+
 void load_model_weights(BertModel &model, SharkLoader &loader)
 {
 
@@ -112,7 +116,29 @@ void load_model_weights(BertModel &model, SharkLoader &loader)
     fill_span(model.classifier_b, classifier.bias);
 }
 
-void test_acc(int pid, BertModel &model, SharkLoader &input_loader, SharkLoader &weight_loader, const int batch_count)
+
+void test_acc_dealer(int pid, BertModel &model)
+{
+    init::from_id(pid);
+    share_model_weights(model);
+
+    span<u64> x(128 * model.n_embd);
+    span<u32> mask(128);  // Attention mask (optional)
+    span<u64> mask_flag(1);
+
+    input::call(mask_flag, CLIENT);
+    output::call(mask_flag);
+    input::call(x, CLIENT);
+    input::call(mask, CLIENT);
+
+    auto y = inference(x, model, mask);
+
+    output::call(y);
+
+    finalize::call();
+}
+
+void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int batch_count, std::string shark_dataset)
 {
     // Sync number of batches
     if (pid == CLIENT) {
@@ -128,7 +154,11 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, SharkLoader 
     {
         init::from_id(pid);
         // Share weights
-        if (party == SERVER) {
+        SharkLoader weight_loader;
+        if (pid == SERVER) {
+            std::cout << "[INFO] (SERVER) Loading model weights..." << std::endl;
+            weight_loader = SharkLoader(shark_dataset, "Bert_base", false);
+
             std::cout << "[INFO] Loading weights into model struct..." << std::endl;
             load_model_weights(model, weight_loader);
         }
@@ -136,7 +166,7 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, SharkLoader 
         std::cout << "[INFO] Model weights shared." << std::endl;
 
         span<u64> x(128 * model.n_embd);
-        span<u32> mask;  // Attention mask (optional)
+        span<u32> mask(128);  // Attention mask (optional)
         bool has_mask = false;
         size_t mask_size = 0;
 
@@ -226,26 +256,6 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, SharkLoader 
 }
 
 
-void test_acc_dealer(int pid, BertModel &model)
-{
-    init::from_id(pid);
-    share_model_weights(model);
-
-    span<u64> x(128 * model.n_embd);
-    span<u32> mask(128);  // Attention mask (optional)
-    span<u64> mask_flag(1);
-
-    input::call(mask_flag, CLIENT);
-    output::call(mask_flag);
-    input::call(x, CLIENT);
-    input::call(mask, CLIENT);
-
-    auto y = inference(x, model, mask);
-
-    output::call(y);
-    finalize::call();
-}
-
 int main(int argc, char **argv)
 {
     setbuf(stdout, NULL);
@@ -289,12 +299,6 @@ int main(int argc, char **argv)
     if (pid != DEALER)
     {
         std::cout << "[INFO] Loading shark data..." << std::endl;
-        
-        SharkLoader w_loader;
-        if (pid == SERVER) {
-            std::cout << "[INFO] (SERVER) Loading model weights..." << std::endl;
-            w_loader = SharkLoader(shark_dataset, "Bert_base", false);
-        }
 
         SharkLoader i_loader;
         if (pid == CLIENT) {
@@ -303,7 +307,7 @@ int main(int argc, char **argv)
         }
         
         std::cout << "[INFO] Starting test_acc..." << std::endl;
-        test_acc(pid, model, i_loader, w_loader, max_samples);
+        test_acc(pid, model, i_loader, max_samples, shark_dataset);
     }
     else
     {

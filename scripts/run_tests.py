@@ -726,9 +726,9 @@ def run_accuracy_benchmark(
             num_labels = 1  # Regression (STS-B)
         args_config = [config["task_name"], str(n_layers), str(n_heads), str(n_embd), str(n_interm), str(num_labels), str(max_samples)]
     
-    cmd_p2 = [exe_path, "2"] + args_config
-    print("Launching Party 2...")
-    subprocess.run(cmd_p2, env=env, check=True, timeout=36000)
+    # cmd_p2 = [exe_path, "2"] + args_config
+    # print("Launching Party 2...")
+    # subprocess.run(cmd_p2, env=env, check=True, timeout=36000)
 
     # Launch Party 0 (Server) first - must bind port before client connects
     cmd_p0 = [exe_path, "0"] + args_config

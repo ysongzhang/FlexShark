@@ -96,9 +96,10 @@ set(MULTI_TESTS
     nexp
     rsqrt
     softmax
+    matmul-big
 
     # relutruncate
-    # matmul-big
+    
     # conv # failing
     # maxpool
     # spline
