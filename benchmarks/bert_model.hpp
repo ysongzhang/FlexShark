@@ -18,6 +18,7 @@
 #include <shark/protocols/gelu.hpp>
 #include <shark/protocols/rsqrt.hpp>
 #include <shark/protocols/up.hpp>
+#include <shark/protocols/down.hpp>
 #include <shark/protocols/layernorm.hpp>
 
 #include <shark/utils/globals.hpp>
@@ -36,7 +37,6 @@ struct BertModel
     u64 n_interm = 3072;
     int logdivisor = 3; // log2(sqrt(n_embd / n_heads))
 
-    // Note: Bias must be keeping 2f precision
     // weights
     std::vector<span<u64>> c_attn_w;
     std::vector<span<u64>> c_attn_b;
@@ -45,7 +45,7 @@ struct BertModel
     std::vector<span<u64>> c_proj_b;
 
     std::vector<span<u64>> ffn_up_w;
-    std::vector<span<u64>> ffn_up_b;
+    std::vector<span<u64>> ffn_up_b; // Note: ffn_up_b must be keeping 2f precision
 
     std::vector<span<u64>> ffn_down_w;
     std::vector<span<u64>> ffn_down_b;
@@ -100,7 +100,16 @@ u64 double2fix(double x) {
     return static_cast<u64>(static_cast<std::make_signed_t<u64>>(x * (1 << FLOAT_PRECISION_64)));  // Note: must truncate the decimal part using static_cast<int_t>
 }
 
-span<u16> bert_gelu(span<u16> &x)
+double fix2double(u64 x) {
+    return static_cast<double>(static_cast<std::make_signed_t<u64>>(x)) / (1 << FLOAT_PRECISION_64);
+}
+
+double fix2double(u32 x) {
+    return static_cast<double>(static_cast<std::make_signed_t<u32>>(x)) / (1 << FLOAT_PRECISION_32);
+}
+
+template <typename T>
+span<T> bert_gelu(span<T> &x)
 {
     return gelu::call(x);
 }
@@ -114,25 +123,41 @@ span<u64> bert_softmax(u64 a, u64 b, span<u32> &x)
 span<u64> linear(u64 a, u64 b, u64 c, span<u64> &x, const span<u64> &w, const span<u64> &bias)
 {
     auto res = matmul::call(a, b, c, x, w);
-    res = add::call(res, bias);
     res = truncate::call(res, FLOAT_PRECISION_64);
+    res = add::call(res, bias);
     return res;
 }
 
 span<u32> linearDowncast32(u64 a, u64 b, u64 c, span<u64> &x, const span<u64> &w, const span<u64> &bias)
 {
+    // Method 1: operation fusion
     auto res_tmp = matmul::call(a, b, c, x, w);
     res_tmp = add::call(res_tmp, bias);
     auto res = truncate::call_64_32(res_tmp, FLOAT_PRECISION_64);
     return res;
+
+    // Method 2: do not double the precision of bias, extra one round
+    // auto res_tmp = matmul::call(a, b, c, x, w);
+    // res_tmp = truncate::call(res_tmp, FLOAT_PRECISION_64);
+    // res_tmp = add::call(res_tmp, bias);
+    // auto res = down::call_64_32(res_tmp, FLOAT_PRECISION_64, FLOAT_PRECISION_32);
+    // return res;
 }
 
 span<u16> linearDowncast16(u64 a, u64 b, u64 c, span<u64> &x, const span<u64> &w, const span<u64> &bias)
 {
+    // Method 1: operation fusion
     auto res_tmp = matmul::call(a, b, c, x, w);
     res_tmp = add::call(res_tmp, bias);
     auto res = truncate::call_64_16(res_tmp, FLOAT_PRECISION_64);
     return res;
+
+    // Method 2: do not double the precision of bias, extra one round
+    // auto res_tmp = matmul::call(a, b, c, x, w);
+    // res_tmp = truncate::call(res_tmp, FLOAT_PRECISION_64);
+    // res_tmp = add::call(res_tmp, bias);
+    // auto res = down::call_64_16(res_tmp, FLOAT_PRECISION_64, FLOAT_PRECISION_16);
+    // return res;
 }
 
 span<u64> ffn(span<u64> &x, int layer, BertModel &model)
@@ -140,11 +165,13 @@ span<u64> ffn(span<u64> &x, int layer, BertModel &model)
     u64 n_token = x.size() / model.n_embd;
 
     auto res_tmp = linearDowncast16(n_token, model.n_embd, model.n_interm, x, model.ffn_up_w[layer], model.ffn_up_b[layer]);
+    // auto res_tmp = linearDowncast32(n_token, model.n_embd, model.n_interm, x, model.ffn_up_w[layer], model.ffn_up_b[layer]);
 
     utils::start_timer("nonlinear");
     res_tmp = bert_gelu(res_tmp);
     utils::stop_timer("nonlinear");
 
+    // auto res = up::call_32_64(res_tmp, FLOAT_PRECISION_32, FLOAT_PRECISION_64);
     auto res = up::call_16_64(res_tmp, FLOAT_PRECISION_16, FLOAT_PRECISION_64);
 
     res = linear(n_token, model.n_interm, model.n_embd, res, model.ffn_down_w[layer], model.ffn_down_b[layer]);
@@ -340,20 +367,15 @@ span<u64> layer(span<u64> &x, int layer, BertModel &model, const span<u32> &mask
     u64 n_token = x.size() / model.n_embd;
     // Post-LayerNorm Architecture (Standard BERT)
     // 1. Attention Sublayer
-    if (party == SERVER) std::cout << "11111" << std::endl;
     auto attn_out = mha(x, layer, model, mask);
-    if (party == SERVER) std::cout << "22222" << std::endl;
     auto res = add::call(x, attn_out);
     auto ln1 = bert_layernorm(res, n_token, model.n_embd, model.ln1_w[layer], model.ln1_b[layer]);
-    if (party == SERVER) std::cout << "33333" << std::endl;
 
     // 2. FFN Sublayer
     auto ffn_out = ffn(ln1, layer, model);
-    if (party == SERVER) std::cout << "44444" << std::endl;
     res = add::call(ln1, ffn_out);
     auto ln2 = bert_layernorm(res, n_token, model.n_embd, model.ln2_w[layer], model.ln2_b[layer]);
-    if (party == SERVER) std::cout << "55555" << std::endl;
-
+    
     return ln2;
 }
 

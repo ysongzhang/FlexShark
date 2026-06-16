@@ -23,6 +23,8 @@ namespace shark
     extern int bin_exsqrt;
     extern std::vector<u16> lut_gelu;
     extern int bin_gelu;
+    extern std::vector<u32> lut_gelu_32;
+    extern int bin_gelu_32;
 
     inline u32 ceil_log2_u32(u32 x) {
         if (x <= 1) return 1;

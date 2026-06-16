@@ -8,6 +8,7 @@
 #include <shark/protocols/drelu.hpp>
 #include <shark/protocols/select.hpp>
 #include <shark/protocols/lut.hpp>
+#include <shark/protocols/truncate.hpp>
 #include <shark/utils/globals.hpp>
 #include <shark/utils/lookuptable.hpp>
 #include <vector>
@@ -47,9 +48,49 @@ namespace shark
                 }
             }
 
+            inline void call(const shark::span<u32> &in, shark::span<u32> &out)
+            {
+                const u64 size = in.size();
+                shark::span<u32> y(size);
+                truncate::call(in, y, FLOAT_PRECISION_32 - FLOAT_PRECISION_16);
+                
+                auto tmp_1 = drelu::call(y);
+                auto p_x = select::call(tmp_1, in);
+                auto p_y = relu::call(y);
+                shark::span<u32> a(size), delta(size);
+                #pragma omp parallel for
+                for(u64 i = 0; i < size; i++)
+                {
+                    a[i] = 2 * p_y[i] - y[i];
+                    if (party != DEALER)
+                    {
+                        delta[i] = u32(256) - a[i];
+                    }
+                    else
+                    {
+                        delta[i] = u32(0) - a[i];
+                    }
+                }
+                auto i_tmp = drelu::call(delta);
+                auto i = select::call(i_tmp, a);
+                auto out_tmp = lut::call(i, lut_gelu_32, bin_gelu_32);
+                #pragma omp parallel for
+                for(u64 i = 0; i < size; i++)
+                {
+                    out[i] = p_x[i] - out_tmp[i];
+                }
+            }
+
             inline shark::span<u16> call(const shark::span<u16> &in)
             {
                 shark::span<u16> out(in.size());
+                call(in, out);
+                return out;
+            }
+
+            inline shark::span<u32> call(const shark::span<u32> &in)
+            {
+                shark::span<u32> out(in.size());
                 call(in, out);
                 return out;
             }

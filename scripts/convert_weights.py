@@ -41,15 +41,23 @@ def convert_weights(src_path, model_name, dataset_name, n_layers=12, hidden_size
 
     shares = {}
 
-    def add_param(name, val, is_bias=False):
+    def add_param(name, val, is_bias=False, double_precesion=False):
         # Float to fixed-point (u64)
         if is_bias:
-            scale = 1 << 32
-            if val.dtype == np.float32 or val.dtype == np.float64:
-                val_int = (val * scale).astype(np.int64).astype(np.uint64)
+            if double_precesion:
+                scale = 1 << 32
+                if val.dtype == np.float32 or val.dtype == np.float64:
+                    val_int = (val * scale).astype(np.int64).astype(np.uint64)
+                else:
+                    val_int = val.astype(np.uint64)
+                suffix = 's'
             else:
-                val_int = val.astype(np.uint64)
-            suffix = 's'
+                scale = 1 << 16
+                if val.dtype == np.float32 or val.dtype == np.float64:
+                    val_int = (val * scale).astype(np.int64).astype(np.uint64)
+                else:
+                    val_int = val.astype(np.uint64)
+                suffix = 's'
         else:
             scale = 1 << 16
             if val.dtype == np.float32 or val.dtype == np.float64:
@@ -152,7 +160,7 @@ def convert_weights(src_path, model_name, dataset_name, n_layers=12, hidden_size
                  if w.shape[0] == hidden_size:
                      w = w.T
                  add_param("ffn_up_w", w)
-                 add_param("ffn_up_b", data[f"{prefix}ffn_up_b"], True)
+                 add_param("ffn_up_b", data[f"{prefix}ffn_up_b"], True, True)
 
             # ffn_down
             if f"{prefix}ffn_down_w" in data:
@@ -236,9 +244,10 @@ def convert_input(src_path, dataset_name, hidden_size=768, max_samples=None):
         attention_mask = data['attention_mask']
         print(f"Found attention_mask with shape {attention_mask.shape}")
 
-        # Convert 1/0 mask to 0/-1000 additive mask for softmax
-        # Valid positions (1) -> 0, Padding positions (0) -> -1000
-        mask_additive = (1 - attention_mask) * -1000.0
+        # Convert 1/0 mask to 0/-10 additive mask for softmax
+        # Valid positions (1) -> 0, Padding positions (0) -> -10
+        # Too large mask may cause the overflow in softmax->nexp
+        mask_additive = (1 - attention_mask) * -10.0
 
     # Normalize both the new batched GPT2 format and the legacy input_0/input_1 format
     # format into one sample list so the downstream share generation path stays uniform

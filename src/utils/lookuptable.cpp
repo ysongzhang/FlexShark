@@ -14,6 +14,8 @@ namespace shark
     int bin_exsqrt;
     std::vector<u16> lut_gelu;
     int bin_gelu;
+    std::vector<u32> lut_gelu_32;
+    int bin_gelu_32;
 
     void init_luts()
     {
@@ -85,6 +87,15 @@ namespace shark
         {
             float real_value = float(i) / (1 << FLOAT_PRECISION_16);
             lut_gelu[i] = u16(int16_t((ReLU(real_value) - GeLU(real_value)) * (1 << FLOAT_PRECISION_16)));
+        }
+
+        // Init gelu_32
+        bin_gelu_32 = bin_gelu;
+        lut_gelu_32.resize(padding_size_gelu);
+        for (int i = 0; i < table_size_gelu; i++)
+        {
+            float real_value = float(i) / (1 << FLOAT_PRECISION_16);
+            lut_gelu_32[i] = u32(int32_t((ReLU(real_value) - GeLU(real_value)) * (1 << FLOAT_PRECISION_32)));
         }
     }
 }

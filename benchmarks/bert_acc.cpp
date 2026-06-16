@@ -4,14 +4,6 @@
 using namespace shark;
 using namespace shark::protocols;
 
-double fix2double(u64 x) {
-    return static_cast<double>(static_cast<std::make_signed_t<u64>>(x)) / (1 << FLOAT_PRECISION_64);
-}
-
-double fix2double(u32 x) {
-    return static_cast<double>(static_cast<std::make_signed_t<u32>>(x)) / (1 << FLOAT_PRECISION_32);
-}
-
 void load_model_weights(BertModel &model, SharkLoader &loader)
 {
 
@@ -123,18 +115,14 @@ void test_acc_dealer(int pid, BertModel &model)
     share_model_weights(model);
 
     span<u64> x(128 * model.n_embd);
-    span<u32> mask(128);  // Attention mask (optional)
-    span<u64> mask_flag(1);
+    span<u32> mask(128);  // Attention mask
 
-    input::call(mask_flag, CLIENT);
-    output::call(mask_flag);
     input::call(x, CLIENT);
     input::call(mask, CLIENT);
 
     auto y = inference(x, model, mask);
 
     output::call(y);
-
     finalize::call();
 }
 
@@ -167,12 +155,7 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int ba
 
         span<u64> x(128 * model.n_embd);
         span<u32> mask(128);  // Attention mask (optional)
-        bool has_mask = false;
-        size_t mask_size = 0;
-
-        // Sync has_mask flag between client and server
-        // This is done via MPC input/output to ensure consistency
-        span<u64> mask_flag(1);
+        size_t mask_size = 128;
 
         if (party == CLIENT) {
             auto input_pair = input_loader.pop();
@@ -189,50 +172,27 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int ba
                 mask_size = input_pair.attention_mask.size();
                 mask = span<u32>(mask_size);
                 fill_span(mask, input_pair.attention_mask);
-                has_mask = true;
                 std::cout << "[DEBUG] Sample " << i << " has attention mask, size=" << mask_size << std::endl;
+            } else
+            {
+                for (size_t i = 0; i < mask.size(); i++)
+                {
+                    mask[i] = 0;
+                }
+                std::cout << "[DEBUG] Sample " << i << " do not have attention mask, padding zeros" << std::endl;
             }
-
-            // Debug: print position 1 embedding (position 0 is [CLS], identical for all inputs)
-            // std::cout << "[DEBUG] Sample " << i << " input[768..771]: "
-            //           << fix2double(x[768]) << " " << fix2double(x[769]) << " "
-            //           << fix2double(x[770]) << " " << fix2double(x[771]) << std::endl;
-
-            // Share mask_flag before optional mask data to keep both parties aligned
-            mask_flag[0] = has_mask ? 1 : 0;
-            input::call(mask_flag, CLIENT);
-            output::call(mask_flag);
-            has_mask = (mask_flag[0] != 0);
 
             // Then share input x
             input::call(x, CLIENT);
-
-            // Finally share mask data after the flag is synchronized
-            if (has_mask) {
-                input::call(mask, CLIENT);
-            }
+            input::call(mask, CLIENT);
         } else {
-            // Receive mask_flag first to match the client-side send order
-            mask_flag[0] = 0;
-            input::call(mask_flag, CLIENT);
-            output::call(mask_flag);
-            has_mask = (mask_flag[0] != 0);
-
-            // Then receive input x
             input::call(x, CLIENT);
-
-            // Receive mask data only when the client reported one
-            if (has_mask) {
-                std::cout << "[DEBUG] Sample " << i << " has attention mask"<< std::endl;
-                mask = span<u32>(128);  // Default mask size matches n_token
-                input::call(mask, CLIENT);
-            }
+            mask = span<u32>(128);  // Default mask size matches n_token
+            input::call(mask, CLIENT);
         }
 
         utils::start_timer("bert_idx_" + std::to_string(idx));
-        // Only pass mask if it's actually valid (has data)
-        span<u32> mask_arg = (has_mask && mask.data() != nullptr && mask.size() > 0) ? mask : span<u32>();
-        auto y = inference(x, model, mask_arg);
+        auto y = inference(x, model, mask);
         utils::stop_timer("bert_idx_" + std::to_string(idx));
 
         output::call(y);
