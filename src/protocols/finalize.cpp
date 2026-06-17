@@ -29,6 +29,20 @@ namespace shark
                     eval();
                 }
             }
+
+            void refresh_preprocessing(bool oneShot)
+            {
+                if (party == DEALER)
+                {
+                }
+                else
+                {
+                    dealer->close();
+                    dealer = new Dealer(filename[party], oneShot);
+                    ring_key = dealer->recv<u64>();
+                    bit_key = dealer->recv<u64>();
+                }
+            }
         }
         
     }

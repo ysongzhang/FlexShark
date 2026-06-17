@@ -128,6 +128,8 @@ void test_acc_dealer(int pid, BertModel &model)
 
 void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int batch_count, std::string shark_dataset)
 {
+    init::from_id(pid);
+
     // Sync number of batches
     if (pid == CLIENT) {
         int batch_count_check = input_loader.buffer.size();
@@ -140,7 +142,6 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int ba
     // Iterate inputs
     for (int i = 0; i < batch_count; ++i)
     {
-        init::from_id(pid);
         // Share weights
         SharkLoader weight_loader;
         if (pid == SERVER) {
@@ -196,7 +197,7 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int ba
         utils::stop_timer("bert_idx_" + std::to_string(idx));
 
         output::call(y);
-        shark::protocols::finalize::call();
+        finalize::refresh_preprocessing();
 
         if (party == SERVER) { // Party 0 writes output
             std::ofstream out("bert_output_p0.txt", std::ios::app);
@@ -213,6 +214,7 @@ void test_acc(int pid, BertModel &model, SharkLoader &input_loader, const int ba
 
         idx++;
     }
+    finalize::call();
 }
 
 

@@ -11,6 +11,7 @@ namespace shark
             void gen();
             void eval();
             void call();
+            void refresh_preprocessing(bool oneShot = true);
         }
         
     }

@@ -131,7 +131,9 @@ namespace shark
 
         void close()
         {
-            // do nothing yet
+            delete[] startPtr;
+            startPtr = nullptr;
+            *memBufPtr = nullptr;
         }
     };
 
