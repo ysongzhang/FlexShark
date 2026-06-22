@@ -370,7 +370,7 @@ span<u64> layer(span<u64> &x, int layer, BertModel &model, const span<u32> &mask
     auto attn_out = mha(x, layer, model, mask);
     auto res = add::call(x, attn_out);
     auto ln1 = bert_layernorm(res, n_token, model.n_embd, model.ln1_w[layer], model.ln1_b[layer]);
-
+    
     // 2. FFN Sublayer
     auto ffn_out = ffn(ln1, layer, model);
     res = add::call(ln1, ffn_out);
