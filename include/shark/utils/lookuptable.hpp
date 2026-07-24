@@ -36,33 +36,4 @@ namespace shark
     }
 
     void init_luts();
-
-
-//     // Init inv
-//     constexpr u32 table_size_inv = (u32)ceil((1.0  - 1.0 / SCALE_BASE) * (1u << FLOAT_PRECISION_32));
-//     constexpr u32 pow2_bit_inv = ceil_log2_u32_constexpr(table_size_inv);
-//     constexpr u32 lut_size_inv = 1u << pow2_bit_inv;
-//     // constexpr std::array<u32, lut_size_inv> make_lut_inv()
-//     // {
-//     //     std::array<u32, lut_size_inv> lut{};
-
-//     //     for (u32 i = 0; i < table_size_inv; ++i)
-//     //     {
-//     //         float real_value = float(i) / (1u << FLOAT_PRECISION_32) + 1.0 / SCALE_BASE;
-//     //         lut[i] = u32((1.0 / real_value) * (1u << FLOAT_PRECISION_32));
-//     //     }
-//     //     return lut;
-//     // }
-//     // inline const auto lut_inv_array = make_lut_inv();
-
-//     // Init exp_2
-//     constexpr u32 table_size_exp_2 = FLOAT_PRECISION_32 + 2;
-//     constexpr u32 pow2_bit_exp_2 = ceil_log2_u32_constexpr(table_size_exp_2);
-//     constexpr u32 lut_size_exp_2 = 1u << pow2_bit_exp_2;
-
-
-//     // Init exp_b
-//     constexpr u32 table_size_exp_b = u32((int)(log(pow(2, 2 * FLOAT_PRECISION_32)) / log(SCALE_BASE)) + 1);
-//     constexpr u32 pow2_bit_exp_b = ceil_log2_u32_constexpr(table_size_exp_b);
-//     constexpr u32 lut_size_exp_b = 1u << pow2_bit_exp_b;
 }

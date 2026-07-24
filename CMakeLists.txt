@@ -51,12 +51,6 @@ add_library(${PROJECT_NAME}
     src/crypto/dcfbit.cpp
     src/crypto/dcfring.cpp
     src/crypto/dpfring.cpp
-
-    # depicted
-    # src/protocols/relutruncate.cpp
-    # src/protocols/spline.cpp
-    # src/protocols/lrs.cpp
-    # src/protocols/reciprocal.cpp
 )
 
 target_link_libraries (${PROJECT_NAME} Eigen3::Eigen cryptoTools)
@@ -68,10 +62,10 @@ PUBLIC
 
 # list of all single running tests
 set(SINGLE_TESTS
-    # dcfbit
-    # dcfring
+    dcfbit
+    dcfring
     dpfring
-    # span
+    span
     truncate-clear
 )
 
@@ -97,16 +91,6 @@ set(MULTI_TESTS
     rsqrt
     softmax
     matmul-big
-
-    # relutruncate
-    
-    # conv # failing
-    # maxpool
-    # spline
-    # sigmoid
-    # tanh
-    # reciprocal # failing
-    # lut
 )
 
 foreach(testname IN LISTS MULTI_TESTS)
@@ -117,6 +101,7 @@ endforeach()
 
 set (BENCHMARKS
     bert
+    gpt2
 )
 
 foreach (benchmark IN LISTS BENCHMARKS)
@@ -126,18 +111,3 @@ endforeach()
 
 add_executable(benchmark-bert-acc benchmarks/bert_acc.cpp)
 target_link_libraries(benchmark-bert-acc ${PROJECT_NAME} cnpy)
-
-# set (MICROBENCHMARKS
-#     # relu
-#     # spline
-#     # relutruncate
-#     # maxpool
-#     # reciprocal
-#     # matmul
-#     # linear
-# )
-
-# foreach (microbenchmark IN LISTS MICROBENCHMARKS)
-#     add_executable(micro-${microbenchmark} microbenchmarks/${microbenchmark}.cpp)
-#     target_link_libraries(micro-${microbenchmark} ${PROJECT_NAME})
-# endforeach()

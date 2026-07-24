@@ -5,7 +5,7 @@ GLUE Dataset Downloader and Preprocessor for MPC-based BERT Inference
 This script downloads the GLUE benchmark datasets (QNLI, RTE, STS-B) and
 prepares them in the format required by the bert_acc.cpp benchmark.
 
-The datasets used are the same as in the Mosformer paper (CCS 2025):
+The datasets used are as follows:
 - QNLI: Question-answering NLI (classification, accuracy metric)
 - RTE: Recognizing Textual Entailment (classification, accuracy metric)
 - STS-B: Semantic Textual Similarity Benchmark (regression, Pearson/Spearman)

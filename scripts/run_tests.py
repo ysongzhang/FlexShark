@@ -21,36 +21,6 @@ ML_DIR = os.path.join(PROJECT_ROOT, "ml")
 # Performance benchmark configurations
 PERFORMANCE_BENCHMARKS = [
     {
-        "executable": "benchmark-alexnet-cifar10",
-        "name": "AlexNet-CIFAR10",
-        "timer_key": "alexnet-cifar10",
-        "description": "AlexNet on CIFAR-10",
-    },
-    {
-        "executable": "benchmark-alexnet",
-        "name": "AlexNet",
-        "timer_key": "alexnet-imagenet",
-        "description": "AlexNet on ImageNet",
-    },
-    {
-        "executable": "benchmark-vgg16-cifar10",
-        "name": "VGG16-CIFAR10",
-        "timer_key": "vgg16-cifar10",
-        "description": "VGG16 on CIFAR-10",
-    },
-    {
-        "executable": "benchmark-vgg16",
-        "name": "VGG16",
-        "timer_key": "vgg16-imagenet",
-        "description": "VGG16 on ImageNet",
-    },
-    {
-        "executable": "benchmark-bert-rough",
-        "name": "BERT-Base-Rough",
-        "timer_key": "bert-rough",
-        "description": "BERT-Base-rough (12 layers, 768 hidden)",
-    },
-    {
         "executable": "benchmark-bert",
         "name": "BERT-Base",
         "timer_key": "bert",
@@ -93,15 +63,6 @@ ACCURACY_BENCHMARKS = {
         "input_name": "bert_input.npz",
         "weights_name": "bert_weights.npz",
         "executable": "benchmark-bert-acc",
-    },
-    "gpt2": {
-        "task_name": "GPT2",
-        "metric": "perplexity",
-        "description": "GPT2-Base on WikiText-103",
-        "dataset_path": "ml/datasets/gpt2",
-        "input_name": "gpt2_input.npz",
-        "weights_name": "gpt2_weights.npz",
-        "executable": "benchmark-gpt2-acc",
     },
 }
 

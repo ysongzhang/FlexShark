@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 """
-Fine-tune BERT without Pooler for MPC Inference
+Fine-tune BERT for MPC Inference
 
 Fine-tunes bert-base-uncased on GLUE tasks (QNLI, RTE, STS-B) with a classifier
-that operates directly on the [CLS] hidden state (no pooler Dense+Tanh layer).
-This matches the MPC inference architecture in bert_model.hpp.
-
-The pre-trained textattack/bert-base-uncased-{TASK} models were trained WITH
-the pooler, causing a mismatch with the MPC pipeline that skips it. This script
-fine-tunes from scratch so classifier weights are trained to work with raw [CLS]
-hidden states.
+that operates directly on the [CLS] hidden state.
 
 Exports weights and inputs in the same format as download_glue.py for direct
 compatibility with convert_weights.py and bert_acc.cpp.

@@ -8,6 +8,7 @@
 #include <shark/protocols/rsqrt.hpp>
 #include <shark/protocols/add.hpp>
 #include <shark/utils/globals.hpp>
+#include <shark/utils/timer.hpp>
 #include <vector>
 
 namespace shark
@@ -67,8 +68,10 @@ namespace shark
                 auto variance_32 = truncate::call_64_32(variance, FLOAT_PRECISION_64);
 
                 // 5. InvSqrt: 1 / sqrt(Variance + eps)
+                utils::start_timer("nonlinear");
                 shark::span<u64> inv_std(n_token);
                 inv_std = rsqrt::call(variance_32);
+                utils::stop_timer("nonlinear");
                 
                 // 6. Normalize: (x - Mean) * inv_std
                 shark::span<u64> inv_std_broadcast(n_token * n_embd);
